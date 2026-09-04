@@ -4,9 +4,79 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminPage() {
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
   const [game, setGame] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([]);
   const [answerCount, setAnswerCount] = useState(0);
+
+  // --------------------------------
+  // LOGIN PRÜFEN
+  // --------------------------------
+
+  useEffect(() => {
+    async function checkLogin() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setUser(user);
+      setSessionChecked(true);
+    }
+
+    checkLogin();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // --------------------------------
+  // EINLOGGEN
+  // --------------------------------
+
+  async function login() {
+    setLoginError("");
+
+    const { data, error } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (error) {
+      console.error(error);
+      setLoginError(
+        "E-Mail oder Passwort ist falsch."
+      );
+      return;
+    }
+
+    setUser(data.user);
+    setPassword("");
+  }
+
+  // --------------------------------
+  // AUSLOGGEN
+  // --------------------------------
+
+  async function logout() {
+    await supabase.auth.signOut();
+    setUser(null);
+  }
 
   // --------------------------------
   // DATEN LADEN
@@ -80,6 +150,8 @@ export default function AdminPage() {
   // --------------------------------
 
   useEffect(() => {
+    if (!user) return;
+
     loadData();
 
     const channel = supabase
@@ -126,7 +198,7 @@ export default function AdminPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user]);
 
   // --------------------------------
   // NÄCHSTE FRAGE
@@ -249,15 +321,14 @@ export default function AdminPage() {
     }
 
     try {
-      // -----------------------------
-      // 1. ALLE ANTWORTEN LÖSCHEN
-      // -----------------------------
-
       const { error: answersError } =
         await supabase
           .from("answers")
           .delete()
-          .neq("id", "00000000-0000-0000-0000-000000000000");
+          .neq(
+            "id",
+            "00000000-0000-0000-0000-000000000000"
+          );
 
       if (answersError) {
         console.error(
@@ -272,10 +343,6 @@ export default function AdminPage() {
 
         return;
       }
-
-      // -----------------------------
-      // 2. ALLE TEILNEHMER LÖSCHEN
-      // -----------------------------
 
       const { error: playersError } =
         await supabase
@@ -296,10 +363,6 @@ export default function AdminPage() {
 
         return;
       }
-
-      // -----------------------------
-      // 3. SPIEL ZURÜCKSETZEN
-      // -----------------------------
 
       const { error: gameError } =
         await supabase
@@ -325,10 +388,6 @@ export default function AdminPage() {
         return;
       }
 
-      // -----------------------------
-      // 4. DATEN NEU LADEN
-      // -----------------------------
-
       setPlayers([]);
       setAnswerCount(0);
 
@@ -348,7 +407,87 @@ export default function AdminPage() {
   }
 
   // --------------------------------
-  // ANSICHT
+  // NOCH LOGIN PRÜFEN
+  // --------------------------------
+
+  if (!sessionChecked) {
+    return (
+      <main className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+        <div className="text-2xl">
+          Prüfe Anmeldung...
+        </div>
+      </main>
+    );
+  }
+
+  // --------------------------------
+  // LOGIN-SEITE
+  // --------------------------------
+
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-indigo-950 text-white flex items-center justify-center p-6">
+        <div className="w-full max-w-md bg-gray-900 rounded-3xl p-8 shadow-2xl">
+
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">
+              🔐
+            </div>
+
+            <h1 className="text-4xl font-black">
+              Moderator
+            </h1>
+
+            <p className="text-gray-400 mt-3">
+              Bitte anmelden
+            </p>
+          </div>
+
+          <input
+            type="email"
+            placeholder="E-Mail"
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+            className="w-full rounded-2xl p-4 text-xl text-black bg-white mb-4"
+          />
+
+          <input
+            type="password"
+            placeholder="Passwort"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                login();
+              }
+            }}
+            className="w-full rounded-2xl p-4 text-xl text-black bg-white mb-4"
+          />
+
+          {loginError && (
+            <div className="bg-red-900/50 border border-red-500 text-red-200 rounded-xl p-4 mb-4 text-center">
+              {loginError}
+            </div>
+          )}
+
+          <button
+            onClick={login}
+            className="w-full bg-purple-600 hover:bg-purple-700 p-5 rounded-2xl text-xl font-bold"
+          >
+            🔓 Einloggen
+          </button>
+
+        </div>
+      </main>
+    );
+  }
+
+  // --------------------------------
+  // ADMIN-ANSICHT
   // --------------------------------
 
   return (
@@ -361,16 +500,35 @@ export default function AdminPage() {
         md:p-10
       "
     >
-      <h1
-        className="
-          text-4xl
-          md:text-6xl
-          font-black
-          mb-10
-        "
-      >
-        🎛 Moderator
-      </h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
+
+        <h1
+          className="
+            text-4xl
+            md:text-6xl
+            font-black
+          "
+        >
+          🎛 Moderator
+        </h1>
+
+        <button
+          onClick={logout}
+          className="
+            bg-gray-800
+            hover:bg-gray-700
+            border
+            border-gray-600
+            px-6
+            py-3
+            rounded-xl
+            font-bold
+          "
+        >
+          🔒 Abmelden
+        </button>
+
+      </div>
 
       {game && (
         <div
@@ -381,6 +539,7 @@ export default function AdminPage() {
             gap-8
           "
         >
+
           {/* LINKER BEREICH */}
 
           <div
@@ -401,6 +560,7 @@ export default function AdminPage() {
             </h2>
 
             <div className="space-y-3 mb-10">
+
               <div>
                 Teilnehmer:{" "}
                 <strong>
@@ -428,6 +588,7 @@ export default function AdminPage() {
                   {game.status}
                 </strong>
               </div>
+
             </div>
 
             <div className="space-y-4">
@@ -491,11 +652,7 @@ export default function AdminPage() {
                 🛑 Quiz beenden
               </button>
 
-              {/* TRENNLINIE */}
-
               <div className="border-t border-gray-700 my-6" />
-
-              {/* RESET BUTTON */}
 
               <button
                 onClick={resetQuiz}
@@ -550,6 +707,7 @@ export default function AdminPage() {
                 overflow-y-auto
               "
             >
+
               {players.map((player) => (
                 <div
                   key={player.id}
@@ -568,8 +726,10 @@ export default function AdminPage() {
                   Noch keine Teilnehmer.
                 </p>
               )}
+
             </div>
           </div>
+
         </div>
       )}
     </main>

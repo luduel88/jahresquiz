@@ -26,7 +26,7 @@ export default function ScreenPage() {
     if (gameData.current_question > 0) {
       const { data: questionData } = await supabase
         .from("questions")
-        .select("*")
+        .select("id, game_id, question_number, image_url, correct_year")
         .eq("game_id", gameData.id)
         .eq(
           "question_number",

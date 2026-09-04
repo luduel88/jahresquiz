@@ -15,7 +15,6 @@ type Question = {
   id: string;
   question_number: number;
   image_url: string;
-  correct_year: number;
 };
 
 export default function PlayPage() {
@@ -88,7 +87,7 @@ export default function PlayPage() {
 
     const { data, error } = await supabase
       .from("questions")
-      .select("*")
+      .select("id, question_number, image_url")
       .eq("game_id", game.id)
       .eq("question_number", questionNumber)
       .single();
@@ -164,41 +163,60 @@ export default function PlayPage() {
     setJoined(true);
   }
 
-  async function submitAnswer() {
-    if (!game || !question || !playerId) return;
+async function submitAnswer() {
+  if (!game || !question || !playerId) return;
 
-    if (seconds <= 0) {
-      setError("Die Zeit ist abgelaufen.");
-      return;
-    }
+  setError("");
 
-    const year = Number(answer);
+  if (seconds <= 0) {
+    setError("Die Zeit ist abgelaufen.");
+    return;
+  }
 
-    if (!Number.isInteger(year) || year < 1800 || year > 2100) {
-      setError("Bitte gib ein gültiges Jahr ein.");
-      return;
-    }
+  const year = Number(answer);
 
-    const points = Math.abs(year - question.correct_year);
+  if (
+    !Number.isInteger(year) ||
+    year < 1800 ||
+    year > 2100
+  ) {
+    setError("Bitte gib ein gültiges Jahr ein.");
+    return;
+  }
 
-    const { error } = await supabase
-      .from("answers")
-      .insert({
-        player_id: playerId,
-        question_id: question.id,
-        answer_year: year,
-        points,
-      });
+  try {
+    const response = await fetch("/api/answer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        playerId,
+        questionId: question.id,
+        answerYear: year,
+      }),
+    });
 
-    if (error) {
-      console.error(error);
-      setError("Antwort konnte nicht gespeichert werden.");
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(
+        data.error ||
+          "Antwort konnte nicht gespeichert werden."
+      );
       return;
     }
 
     setSubmitted(true);
     setError("");
+  } catch (error) {
+    console.error(error);
+
+    setError(
+      "Antwort konnte nicht gespeichert werden."
+    );
   }
+}
 
   if (!game) {
     return (
