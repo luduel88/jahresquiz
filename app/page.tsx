@@ -1,150 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { QRCodeSVG } from "qrcode.react";
 
-interface LeaderboardPlayer {
-  id: string;
-  name: string;
-  total_points: number;
-  answered_questions: number;
-}
-
-interface Props {
-  gameId: string;
-  limit?: number;
-}
-
-export default function Leaderboard({
-  gameId,
-  limit,
-}: Props) {
-
-  const [players, setPlayers] =
-    useState<LeaderboardPlayer[]>([]);
-
-  async function loadLeaderboard() {
-
-    let query = supabase
-      .from("leaderboard")
-      .select("*")
-      .eq("game_id", gameId)
-      .order("total_points", {
-        ascending: true,
-      });
-
-    if (limit) {
-      query = query.limit(limit);
-    }
-
-    const { data } = await query;
-
-    if (data) {
-      setPlayers(data);
-    }
-  }
+export default function Home() {
+  const [url, setUrl] = useState("");
 
   useEffect(() => {
-
-    loadLeaderboard();
-
-    const channel = supabase
-      .channel("leaderboard-updates")
-
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "answers",
-        },
-        () => loadLeaderboard()
-      )
-
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-
-  }, [gameId]);
-
-  const medals = ["🥇", "🥈", "🥉"];
+    setUrl(`${window.location.origin}/play`);
+  }, []);
 
   return (
+    <main className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-indigo-950 flex flex-col items-center justify-center p-8 text-center text-white">
 
-    <div className="w-full max-w-5xl mx-auto">
-
-      <h1 className="text-5xl md:text-7xl font-black text-center mb-12">
-
-        🏆 RANGLISTE
-
+      <h1 className="text-6xl md:text-8xl font-black mb-6">
+        📸 JAHRES-QUIZ
       </h1>
 
-      <div className="space-y-3">
+      <p className="text-xl md:text-3xl text-gray-300 mb-12">
+        Aus welchem Jahr stammt dieses Foto?
+      </p>
 
-        {players.map((player, index) => (
+      {url && (
+        <div className="bg-white p-8 rounded-3xl shadow-2xl">
+          <QRCodeSVG
+            value={url}
+            size={350}
+            level="H"
+          />
+        </div>
+      )}
 
-          <div
-            key={player.id}
+      <p className="mt-10 text-2xl text-gray-300">
+        QR-Code scannen und mitspielen!
+      </p>
 
-            className="
-              flex
-              items-center
-              justify-between
-              bg-white
-              text-black
-              p-5
-              md:p-7
-              rounded-2xl
-              shadow-xl
-            "
-          >
-
-            <div className="flex items-center gap-5">
-
-              <div className="text-3xl md:text-5xl w-16">
-
-                {index < 3
-                  ? medals[index]
-                  : `#${index + 1}`}
-
-              </div>
-
-              <div>
-
-                <div className="text-2xl md:text-4xl font-bold">
-
-                  {player.name}
-
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="text-right">
-
-              <div className="text-3xl md:text-5xl font-black">
-
-                {player.total_points}
-
-              </div>
-
-              <div className="text-gray-500">
-
-                Punkte
-
-              </div>
-
-            </div>
-
-          </div>
-
-        ))}
-
-      </div>
-
-    </div>
+    </main>
   );
 }
