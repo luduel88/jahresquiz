@@ -163,69 +163,74 @@ export default function PlayPage() {
     setJoined(true);
   }
 
-async function submitAnswer() {
-  if (!game || !question || !playerId) return;
+  async function submitAnswer() {
+    if (!game || !question || !playerId) return;
 
-  setError("");
+    setError("");
 
-  if (seconds <= 0) {
-    setError("Die Zeit ist abgelaufen.");
-    return;
-  }
-
-  const year = Number(answer);
-
-  if (
-    !Number.isInteger(year) ||
-    year < 1800 ||
-    year > 2100
-  ) {
-    setError("Bitte gib ein gültiges Jahr ein.");
-    return;
-  }
-
-  try {
-    const response = await fetch("/api/answer", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        playerId,
-        questionId: question.id,
-        answerYear: year,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setError(
-        data.error ||
-          "Antwort konnte nicht gespeichert werden."
-      );
+    if (seconds <= 0) {
+      setError("Die Zeit ist abgelaufen.");
       return;
     }
 
-    setSubmitted(true);
-    setError("");
-  } catch (error) {
-    console.error(error);
+    const year = Number(answer);
 
-    setError(
-      "Antwort konnte nicht gespeichert werden."
-    );
+    if (
+      !Number.isInteger(year) ||
+      year < 1800 ||
+      year > 2100
+    ) {
+      setError("Bitte gib ein gültiges Jahr ein.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/answer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          playerId,
+          questionId: question.id,
+          answerYear: year,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+          data.error ||
+            "Antwort konnte nicht gespeichert werden."
+        );
+        return;
+      }
+
+      setSubmitted(true);
+      setError("");
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "Antwort konnte nicht gespeichert werden."
+      );
+    }
   }
-}
 
   if (!game) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-black text-white p-6">
+      <main className="min-h-screen flex items-center justify-center bg-white text-red-700 p-6">
         <div className="text-center">
+          <div className="text-6xl mb-6">📸</div>
+
           <h1 className="text-4xl font-black mb-4">
-            📸 JAHRES-QUIZ
+            JAHRES-QUIZ
           </h1>
-          <p>Lade Quiz...</p>
+
+          <p className="text-gray-600">
+            Lade Quiz...
+          </p>
         </div>
       </main>
     );
@@ -233,15 +238,15 @@ async function submitAnswer() {
 
   if (!joined) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-indigo-950 text-white p-6">
+      <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6">
         <div className="w-full max-w-md text-center">
-          <div className="text-6xl mb-6">📸</div>
+          <div className="text-7xl mb-6">📸</div>
 
-          <h1 className="text-4xl font-black mb-3">
+          <h1 className="text-5xl font-black text-red-600 mb-3">
             JAHRES-QUIZ
           </h1>
 
-          <p className="text-gray-300 mb-8">
+          <p className="text-gray-600 text-lg mb-8">
             Gib deinen Namen ein und spiel mit!
           </p>
 
@@ -252,18 +257,20 @@ async function submitAnswer() {
               if (e.key === "Enter") joinGame();
             }}
             placeholder="Dein Name"
-            className="w-full rounded-2xl p-4 text-xl text-black bg-white mb-4"
+            className="w-full rounded-2xl p-4 text-xl text-black bg-white mb-4 border-2 border-gray-200 focus:border-red-600 focus:outline-none"
           />
 
           <button
             onClick={joinGame}
-            className="w-full rounded-2xl bg-white text-black font-bold text-xl p-4"
+            className="w-full rounded-2xl bg-red-600 text-white font-bold text-xl p-4 shadow-lg active:scale-95 transition"
           >
-            Mitspielen
+            MITspielen
           </button>
 
           {error && (
-            <p className="text-red-400 mt-4">{error}</p>
+            <p className="text-red-600 font-semibold mt-4">
+              {error}
+            </p>
           )}
         </div>
       </main>
@@ -272,15 +279,15 @@ async function submitAnswer() {
 
   if (game.status === "waiting") {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-indigo-950 text-white p-6 text-center">
+      <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6 text-center">
         <div>
           <div className="text-7xl mb-6">⏳</div>
 
-          <h1 className="text-4xl font-black mb-4">
+          <h1 className="text-4xl font-black text-red-600 mb-4">
             Hallo {name}!
           </h1>
 
-          <p className="text-2xl text-gray-300">
+          <p className="text-2xl text-gray-600">
             Warte auf den Start...
           </p>
         </div>
@@ -290,7 +297,7 @@ async function submitAnswer() {
 
   if (game.status === "finished") {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-black text-white p-6 text-center">
+      <main className="min-h-screen flex items-center justify-center bg-red-600 text-white p-6 text-center">
         <div>
           <div className="text-7xl mb-6">🏆</div>
 
@@ -298,7 +305,7 @@ async function submitAnswer() {
             Quiz beendet!
           </h1>
 
-          <p className="text-xl text-gray-300">
+          <p className="text-xl">
             Danke fürs Mitspielen, {name}!
           </p>
         </div>
@@ -308,15 +315,15 @@ async function submitAnswer() {
 
   if (game.status === "reveal") {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-black text-white p-6 text-center">
+      <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6 text-center">
         <div>
           <div className="text-6xl mb-6">✅</div>
 
-          <h1 className="text-3xl font-black mb-4">
+          <h1 className="text-3xl font-black text-red-600 mb-4">
             Antwort gespeichert
           </h1>
 
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-gray-600">
             Warte auf die nächste Frage.
           </p>
         </div>
@@ -326,15 +333,15 @@ async function submitAnswer() {
 
   if (game.status === "leaderboard") {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-black text-white p-6 text-center">
+      <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6 text-center">
         <div>
           <div className="text-6xl mb-6">🏆</div>
 
-          <h1 className="text-3xl font-black mb-4">
+          <h1 className="text-3xl font-black text-red-600 mb-4">
             Zwischenstand
           </h1>
 
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-gray-600">
             Die Rangliste siehst du auf dem Bildschirm.
           </p>
         </div>
@@ -343,63 +350,75 @@ async function submitAnswer() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-6">
+    <main className="min-h-screen bg-white text-gray-900 p-6">
       <div className="max-w-xl mx-auto">
 
+        <div className="h-2 bg-red-600 rounded-full mb-6" />
+
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-black">
+          <h1 className="text-2xl font-black text-red-600">
             Frage {game.current_question}
           </h1>
 
-          <div className="text-3xl font-black">
+          <div
+            className={`text-3xl font-black ${
+              seconds <= 5
+                ? "text-red-600"
+                : "text-gray-900"
+            }`}
+          >
             {seconds}s
           </div>
         </div>
 
         {question && (
           <>
-            <img
-              src={question.image_url}
-              alt="Quizfoto"
-              className="w-full rounded-2xl mb-6"
-            />
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-6">
+              <img
+                src={question.image_url}
+                alt="Quizfoto"
+                className="w-full"
+              />
+            </div>
 
             {!submitted ? (
               <>
-                <p className="text-xl mb-3">
+                <p className="text-xl font-bold mb-3">
                   Aus welchem Jahr stammt das Foto?
                 </p>
 
                 <input
                   type="number"
                   value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  onChange={(e) =>
+                    setAnswer(e.target.value)
+                  }
                   placeholder="Jahr"
-                  className="w-full rounded-2xl p-5 text-2xl text-black bg-white mb-4 text-center"
+                  className="w-full rounded-2xl p-5 text-2xl text-black bg-white mb-4 text-center border-2 border-gray-200 focus:border-red-600 focus:outline-none"
                   disabled={seconds <= 0}
                 />
 
                 <button
                   onClick={submitAnswer}
                   disabled={seconds <= 0}
-                  className="w-full rounded-2xl bg-white text-black font-black text-xl p-5 disabled:opacity-40"
+                  className="w-full rounded-2xl bg-red-600 text-white font-black text-xl p-5 shadow-lg disabled:opacity-40 active:scale-95 transition"
                 >
-                  Antwort abschicken
+                  ANTWORT ABSCHICKEN
                 </button>
               </>
             ) : (
-              <div className="text-center">
+              <div className="text-center bg-red-50 rounded-2xl p-8 border-2 border-red-100">
                 <div className="text-6xl mb-4">✅</div>
 
-                <h2 className="text-3xl font-black mb-2">
+                <h2 className="text-3xl font-black text-red-600 mb-2">
                   Antwort gespeichert!
                 </h2>
 
-                <p className="text-gray-300">
-                  Deine Antwort: {answer}
+                <p className="text-gray-700">
+                  Deine Antwort: <strong>{answer}</strong>
                 </p>
 
-                <p className="text-gray-400 mt-4">
+                <p className="text-gray-500 mt-4">
                   Warte auf die Auflösung.
                 </p>
               </div>
@@ -408,7 +427,7 @@ async function submitAnswer() {
         )}
 
         {error && (
-          <p className="text-red-400 text-center mt-4">
+          <p className="text-red-600 font-semibold text-center mt-4">
             {error}
           </p>
         )}

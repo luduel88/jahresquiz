@@ -406,14 +406,14 @@ export default function AdminPage() {
     }
   }
 
-  // --------------------------------
+    // --------------------------------
   // NOCH LOGIN PRÜFEN
   // --------------------------------
 
   if (!sessionChecked) {
     return (
-      <main className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
-        <div className="text-2xl">
+      <main className="min-h-screen bg-white text-red-600 flex items-center justify-center">
+        <div className="text-2xl font-bold">
           Prüfe Anmeldung...
         </div>
       </main>
@@ -426,60 +426,101 @@ export default function AdminPage() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-indigo-950 text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-md bg-gray-900 rounded-3xl p-8 shadow-2xl">
+      <main className="min-h-screen bg-white text-gray-900 flex items-center justify-center p-6">
+
+        <div className="w-full max-w-md">
 
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4">
+            <div className="text-7xl mb-5">
               🔐
             </div>
 
-            <h1 className="text-4xl font-black">
+            <h1 className="text-5xl font-black text-red-600">
               Moderator
             </h1>
 
-            <p className="text-gray-400 mt-3">
+            <p className="text-gray-500 text-lg mt-3">
               Bitte anmelden
             </p>
           </div>
 
-          <input
-            type="email"
-            placeholder="E-Mail"
-            value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
-            className="w-full rounded-2xl p-4 text-xl text-black bg-white mb-4"
-          />
+          <div className="bg-white border-2 border-gray-100 rounded-3xl p-8 shadow-2xl">
 
-          <input
-            type="password"
-            placeholder="Passwort"
-            value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                login();
+            <input
+              type="email"
+              placeholder="E-Mail"
+              value={email}
+              onChange={(e) =>
+                setEmail(e.target.value)
               }
-            }}
-            className="w-full rounded-2xl p-4 text-xl text-black bg-white mb-4"
-          />
+              className="
+                w-full
+                rounded-2xl
+                p-4
+                text-xl
+                text-black
+                bg-white
+                mb-4
+                border-2
+                border-gray-200
+                focus:border-red-600
+                focus:outline-none
+              "
+            />
 
-          {loginError && (
-            <div className="bg-red-900/50 border border-red-500 text-red-200 rounded-xl p-4 mb-4 text-center">
-              {loginError}
-            </div>
-          )}
+            <input
+              type="password"
+              placeholder="Passwort"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  login();
+                }
+              }}
+              className="
+                w-full
+                rounded-2xl
+                p-4
+                text-xl
+                text-black
+                bg-white
+                mb-4
+                border-2
+                border-gray-200
+                focus:border-red-600
+                focus:outline-none
+              "
+            />
 
-          <button
-            onClick={login}
-            className="w-full bg-purple-600 hover:bg-purple-700 p-5 rounded-2xl text-xl font-bold"
-          >
-            🔓 Einloggen
-          </button>
+            {loginError && (
+              <div className="bg-red-50 border-2 border-red-200 text-red-700 rounded-xl p-4 mb-4 text-center font-semibold">
+                {loginError}
+              </div>
+            )}
+
+            <button
+              onClick={login}
+              className="
+                w-full
+                bg-red-600
+                hover:bg-red-700
+                text-white
+                p-5
+                rounded-2xl
+                text-xl
+                font-bold
+                shadow-lg
+                active:scale-95
+                transition
+              "
+            >
+              🔓 EINLOGGEN
+            </button>
+
+          </div>
 
         </div>
       </main>
@@ -491,247 +532,300 @@ export default function AdminPage() {
   // --------------------------------
 
   return (
-    <main
-      className="
-        min-h-screen
-        bg-gray-950
-        text-white
-        p-6
-        md:p-10
-      "
-    >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
+    <main className="min-h-screen bg-white text-gray-900 p-6 md:p-10">
 
-        <h1
-          className="
-            text-4xl
-            md:text-6xl
-            font-black
-          "
-        >
-          🎛 Moderator
-        </h1>
+      <div className="max-w-7xl mx-auto">
 
-        <button
-          onClick={logout}
-          className="
-            bg-gray-800
-            hover:bg-gray-700
-            border
-            border-gray-600
-            px-6
-            py-3
-            rounded-xl
-            font-bold
-          "
-        >
-          🔒 Abmelden
-        </button>
+        {/* HEADER */}
+
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
+
+          <div>
+            <p className="text-red-600 font-bold uppercase tracking-widest text-sm mb-1">
+              JAHRES-QUIZ
+            </p>
+
+            <h1 className="text-4xl md:text-6xl font-black">
+              🎛 Moderator
+            </h1>
+          </div>
+
+          <button
+            onClick={logout}
+            className="
+              bg-white
+              hover:bg-gray-50
+              border-2
+              border-gray-200
+              text-gray-700
+              px-6
+              py-3
+              rounded-xl
+              font-bold
+              shadow-sm
+              active:scale-95
+              transition
+            "
+          >
+            🔒 Abmelden
+          </button>
+
+        </div>
+
+        {game && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            {/* LINKER BEREICH */}
+
+            <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-red-100">
+
+              <div className="flex items-center justify-between mb-6">
+
+                <h2 className="text-2xl font-black">
+                  Spielstatus
+                </h2>
+
+                <div className="bg-red-50 text-red-600 px-4 py-2 rounded-full font-bold text-sm">
+                  LIVE
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 mb-8">
+
+                <div className="bg-red-50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-black text-red-600">
+                    {players.length}
+                  </div>
+
+                  <div className="text-sm text-gray-500">
+                    Teilnehmer
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-black">
+                    {game.current_question}
+                    <span className="text-gray-400 text-xl">
+                      /20
+                    </span>
+                  </div>
+
+                  <div className="text-sm text-gray-500">
+                    Frage
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                  <div className="text-3xl font-black">
+                    {answerCount}
+                    <span className="text-gray-400 text-xl">
+                      /{players.length}
+                    </span>
+                  </div>
+
+                  <div className="text-sm text-gray-500">
+                    Antworten
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="bg-gray-50 rounded-2xl p-5 mb-8">
+
+                <div className="text-sm text-gray-500 mb-1">
+                  Aktueller Status
+                </div>
+
+                <div className="text-2xl font-black text-red-600">
+                  {game.status}
+                </div>
+
+              </div>
+
+              {/* HAUPTAKTIONEN */}
+
+              <div className="space-y-4">
+
+                <button
+                  onClick={startNextQuestion}
+                  className="
+                    w-full
+                    bg-red-600
+                    hover:bg-red-700
+                    text-white
+                    p-6
+                    rounded-2xl
+                    text-xl
+                    font-black
+                    shadow-lg
+                    active:scale-[0.98]
+                    transition
+                  "
+                >
+                  ▶ NÄCHSTE FRAGE STARTEN
+                </button>
+
+                <button
+                  onClick={revealAnswer}
+                  className="
+                    w-full
+                    bg-white
+                    hover:bg-red-50
+                    text-red-600
+                    border-2
+                    border-red-200
+                    p-5
+                    rounded-2xl
+                    text-xl
+                    font-bold
+                    active:scale-[0.98]
+                    transition
+                  "
+                >
+                  👁 RICHTIGE ANTWORT ZEIGEN
+                </button>
+
+                <button
+                  onClick={showLeaderboard}
+                  className="
+                    w-full
+                    bg-white
+                    hover:bg-red-50
+                    text-red-600
+                    border-2
+                    border-red-200
+                    p-5
+                    rounded-2xl
+                    text-xl
+                    font-bold
+                    active:scale-[0.98]
+                    transition
+                  "
+                >
+                  🏆 RANGLISTE ANZEIGEN
+                </button>
+
+                <button
+                  onClick={finishGame}
+                  className="
+                    w-full
+                    bg-gray-900
+                    hover:bg-black
+                    text-white
+                    p-4
+                    rounded-2xl
+                    font-bold
+                    active:scale-[0.98]
+                    transition
+                  "
+                >
+                  🛑 QUIZ BEENDEN
+                </button>
+
+                <div className="border-t-2 border-gray-100 my-7" />
+
+                <button
+                  onClick={resetQuiz}
+                  className="
+                    w-full
+                    bg-white
+                    hover:bg-red-50
+                    border-2
+                    border-red-300
+                    text-red-600
+                    p-5
+                    rounded-2xl
+                    text-xl
+                    font-bold
+                    active:scale-[0.98]
+                    transition
+                  "
+                >
+                  🔄 QUIZ ZURÜCKSETZEN
+                </button>
+
+                <p className="text-sm text-gray-400 text-center">
+                  Teilnehmer und Antworten werden gelöscht.
+                  <br />
+                  Fragen und Bilder bleiben erhalten.
+                </p>
+
+              </div>
+
+            </div>
+
+            {/* RECHTER BEREICH */}
+
+            <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-gray-100">
+
+              <div className="flex items-center justify-between mb-6">
+
+                <h2 className="text-2xl font-black">
+                  Teilnehmer
+                </h2>
+
+                <div className="bg-red-600 text-white px-4 py-2 rounded-full font-black">
+                  {players.length}
+                </div>
+
+              </div>
+
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+
+                {players.map((player, index) => (
+                  <div
+                    key={player.id}
+                    className="
+                      flex
+                      items-center
+                      gap-4
+                      bg-gray-50
+                      hover:bg-red-50
+                      p-4
+                      rounded-xl
+                      border
+                      border-gray-100
+                      transition
+                    "
+                  >
+
+                    <div className="w-8 text-center font-bold text-gray-400">
+                      {index + 1}
+                    </div>
+
+                    <div className="w-3 h-3 rounded-full bg-red-600" />
+
+                    <div className="font-bold text-lg">
+                      {player.name}
+                    </div>
+
+                  </div>
+                ))}
+
+                {players.length === 0 && (
+                  <div className="text-center py-16">
+
+                    <div className="text-6xl mb-4">
+                      👥
+                    </div>
+
+                    <p className="text-gray-400 text-lg">
+                      Noch keine Teilnehmer.
+                    </p>
+
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
 
       </div>
 
-      {game && (
-        <div
-          className="
-            grid
-            grid-cols-1
-            lg:grid-cols-2
-            gap-8
-          "
-        >
-
-          {/* LINKER BEREICH */}
-
-          <div
-            className="
-              bg-gray-900
-              rounded-3xl
-              p-8
-            "
-          >
-            <h2
-              className="
-                text-2xl
-                font-bold
-                mb-6
-              "
-            >
-              Spielstatus
-            </h2>
-
-            <div className="space-y-3 mb-10">
-
-              <div>
-                Teilnehmer:{" "}
-                <strong>
-                  {players.length}
-                </strong>
-              </div>
-
-              <div>
-                Frage:{" "}
-                <strong>
-                  {game.current_question} / 20
-                </strong>
-              </div>
-
-              <div>
-                Antworten:{" "}
-                <strong>
-                  {answerCount} / {players.length}
-                </strong>
-              </div>
-
-              <div>
-                Status:{" "}
-                <strong>
-                  {game.status}
-                </strong>
-              </div>
-
-            </div>
-
-            <div className="space-y-4">
-
-              <button
-                onClick={startNextQuestion}
-                className="
-                  w-full
-                  bg-green-600
-                  hover:bg-green-700
-                  p-6
-                  rounded-2xl
-                  text-xl
-                  font-bold
-                "
-              >
-                ▶ Nächste Frage starten
-              </button>
-
-              <button
-                onClick={revealAnswer}
-                className="
-                  w-full
-                  bg-blue-600
-                  hover:bg-blue-700
-                  p-6
-                  rounded-2xl
-                  text-xl
-                  font-bold
-                "
-              >
-                👁 Richtige Antwort zeigen
-              </button>
-
-              <button
-                onClick={showLeaderboard}
-                className="
-                  w-full
-                  bg-purple-600
-                  hover:bg-purple-700
-                  p-6
-                  rounded-2xl
-                  text-xl
-                  font-bold
-                "
-              >
-                🏆 Rangliste anzeigen
-              </button>
-
-              <button
-                onClick={finishGame}
-                className="
-                  w-full
-                  bg-red-600
-                  hover:bg-red-700
-                  p-4
-                  rounded-2xl
-                  font-bold
-                "
-              >
-                🛑 Quiz beenden
-              </button>
-
-              <div className="border-t border-gray-700 my-6" />
-
-              <button
-                onClick={resetQuiz}
-                className="
-                  w-full
-                  bg-gray-800
-                  hover:bg-gray-700
-                  border-2
-                  border-orange-500
-                  text-orange-400
-                  p-5
-                  rounded-2xl
-                  text-xl
-                  font-bold
-                "
-              >
-                🔄 Quiz zurücksetzen
-              </button>
-
-              <p className="text-sm text-gray-500 text-center">
-                Teilnehmer und Antworten werden gelöscht.
-                <br />
-                Fragen und Bilder bleiben erhalten.
-              </p>
-
-            </div>
-          </div>
-
-          {/* RECHTER BEREICH */}
-
-          <div
-            className="
-              bg-gray-900
-              rounded-3xl
-              p-8
-            "
-          >
-            <h2
-              className="
-                text-2xl
-                font-bold
-                mb-6
-              "
-            >
-              Teilnehmer ({players.length})
-            </h2>
-
-            <div
-              className="
-                space-y-2
-                max-h-[600px]
-                overflow-y-auto
-              "
-            >
-
-              {players.map((player) => (
-                <div
-                  key={player.id}
-                  className="
-                    bg-gray-800
-                    p-4
-                    rounded-xl
-                  "
-                >
-                  {player.name}
-                </div>
-              ))}
-
-              {players.length === 0 && (
-                <p className="text-gray-500">
-                  Noch keine Teilnehmer.
-                </p>
-              )}
-
-            </div>
-          </div>
-
-        </div>
-      )}
     </main>
   );
 }
