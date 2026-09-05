@@ -174,9 +174,14 @@ export async function POST(request: Request) {
     // PUNKTE SERVERSEITIG BERECHNEN
     // --------------------------------
 
-    const points = Math.abs(
-      year - question.correct_year
-    );
+    const difference = Math.abs(
+	  year - question.correct_year
+	);
+
+	const points = Math.max(
+	  0,
+	  20 - difference
+	);
 
     // --------------------------------
     // ANTWORT SPEICHERN

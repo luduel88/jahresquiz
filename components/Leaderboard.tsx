@@ -30,7 +30,7 @@ export default function Leaderboard({
       .select("*")
       .eq("game_id", gameId)
       .order("total_points", {
-        ascending: true,
+        ascending: false,
       });
 
     if (limit) {
