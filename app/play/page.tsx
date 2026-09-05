@@ -7,7 +7,12 @@ type Game = {
   id: string;
   title: string;
   current_question: number;
-  status: "waiting" | "question" | "reveal" | "leaderboard" | "finished";
+  status:
+    | "waiting"
+    | "question"
+    | "reveal"
+    | "leaderboard"
+    | "finished";
   question_started_at: string | null;
 };
 
@@ -20,40 +25,144 @@ type Question = {
 export default function PlayPage() {
   const [game, setGame] = useState<Game | null>(null);
   const [question, setQuestion] = useState<Question | null>(null);
+
   const [name, setName] = useState("");
   const [playerId, setPlayerId] = useState("");
+
   const [joined, setJoined] = useState(false);
+
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
   const [seconds, setSeconds] = useState(30);
   const [error, setError] = useState("");
 
+  const [loading, setLoading] = useState(true);
+
+  /*
+   * ---------------------------------------------------------
+   * INITIALISIERUNG
+   * ---------------------------------------------------------
+   *
+   * Beim ersten Laden:
+   * 1. Aktuelles Spiel laden
+   * 2. Gespeicherten Player aus localStorage suchen
+   * 3. Prüfen, ob dieser Player noch zum aktuellen Spiel gehört
+   * 4. Falls ja -> Spieler automatisch wieder anmelden
+   */
   useEffect(() => {
-    loadGame();
+    initialize();
   }, []);
 
-  async function loadGame() {
-    const { data, error } = await supabase
+  async function initialize() {
+    setLoading(true);
+    setError("");
+
+    const { data: currentGame, error: gameError } = await supabase
       .from("games")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
-    if (error) {
+    if (gameError || !currentGame) {
+      console.error(gameError);
       setError("Spiel konnte nicht geladen werden.");
-      console.error(error);
+      setLoading(false);
       return;
     }
 
-    setGame(data);
+    const loadedGame = currentGame as Game;
+
+    setGame(loadedGame);
+
+    /*
+     * Gespeicherte Player-Daten aus dem Browser holen
+     */
+    const savedPlayerId = localStorage.getItem("quiz_player_id");
+    const savedPlayerName = localStorage.getItem("quiz_player_name");
+    const savedGameId = localStorage.getItem("quiz_game_id");
+
+    /*
+     * Noch kein gespeicherter Spieler:
+     * -> normale Registrierung anzeigen
+     */
+    if (!savedPlayerId || !savedGameId) {
+      setLoading(false);
+      return;
+    }
+
+    /*
+     * Der gespeicherte Spieler gehört zu einem anderen Spiel.
+     *
+     * Beispiel:
+     * Gestern Spiel A
+     * Heute Spiel B
+     *
+     * Dann soll man sich für Spiel B neu registrieren.
+     */
+    if (savedGameId !== loadedGame.id) {
+      localStorage.removeItem("quiz_player_id");
+      localStorage.removeItem("quiz_player_name");
+      localStorage.removeItem("quiz_game_id");
+
+      setLoading(false);
+      return;
+    }
+
+    /*
+     * Player in Supabase überprüfen.
+     */
+    const { data: player, error: playerError } = await supabase
+      .from("players")
+      .select("id, name, game_id")
+      .eq("id", savedPlayerId)
+      .eq("game_id", loadedGame.id)
+      .single();
+
+    /*
+     * Player existiert nicht mehr.
+     * Dann localStorage aufräumen und Registrierung anzeigen.
+     */
+    if (playerError || !player) {
+      console.error(playerError);
+
+      localStorage.removeItem("quiz_player_id");
+      localStorage.removeItem("quiz_player_name");
+      localStorage.removeItem("quiz_game_id");
+
+      setLoading(false);
+      return;
+    }
+
+    /*
+     * Spieler wiederherstellen
+     */
+    setPlayerId(player.id);
+    setName(player.name);
+
+    /*
+     * Falls aus irgendeinem Grund der Name im localStorage
+     * fehlt, verwenden wir den Namen aus Supabase.
+     */
+    localStorage.setItem("quiz_player_id", player.id);
+    localStorage.setItem("quiz_player_name", player.name);
+    localStorage.setItem("quiz_game_id", loadedGame.id);
+
+    setJoined(true);
+    setLoading(false);
   }
 
+  /*
+   * ---------------------------------------------------------
+   * REALTIME GAME UPDATES
+   * ---------------------------------------------------------
+   */
   useEffect(() => {
     if (!game) return;
 
     const channel = supabase
-      .channel("game-changes")
+      .channel(`game-changes-${game.id}`)
       .on(
         "postgres_changes",
         {
@@ -73,6 +182,11 @@ export default function PlayPage() {
     };
   }, [game?.id]);
 
+  /*
+   * ---------------------------------------------------------
+   * FRAGE LADEN
+   * ---------------------------------------------------------
+   */
   useEffect(() => {
     if (!game || game.current_question === 0) {
       setQuestion(null);
@@ -80,7 +194,7 @@ export default function PlayPage() {
     }
 
     loadQuestion(game.current_question);
-  }, [game?.current_question]);
+  }, [game?.id, game?.current_question]);
 
   async function loadQuestion(questionNumber: number) {
     if (!game) return;
@@ -92,16 +206,64 @@ export default function PlayPage() {
       .eq("question_number", questionNumber)
       .single();
 
-    if (error) {
+    if (error || !data) {
       console.error(error);
       return;
     }
 
     setQuestion(data);
+
+    /*
+     * Wichtig:
+     *
+     * Beim normalen Wechsel zu einer neuen Frage
+     * soll die Antwort leer sein.
+     *
+     * Beim Reload derselben Frage prüfen wir aber,
+     * ob bereits eine Antwort gespeichert wurde.
+     */
     setAnswer("");
     setSubmitted(false);
+
+    if (!playerId) return;
+
+    /*
+     * Bereits abgegebene Antwort suchen.
+     *
+     * Falls deine Tabelle anders heißt oder andere Spalten
+     * verwendet, müsste dieser Teil entsprechend angepasst
+     * werden. Nach deinem bestehenden /api/answer-Aufbau ist
+     * "answers" mit player_id, question_id und answer_year
+     * die naheliegende Struktur.
+     */
+    const { data: existingAnswer, error: answerError } =
+      await supabase
+        .from("answers")
+        .select("id, answer_year")
+        .eq("player_id", playerId)
+        .eq("question_id", data.id)
+        .maybeSingle();
+
+    if (answerError) {
+      /*
+       * Falls RLS das Lesen der answers verhindert,
+       * soll das eigentliche Quiz trotzdem funktionieren.
+       */
+      console.error(answerError);
+      return;
+    }
+
+    if (existingAnswer) {
+      setAnswer(String(existingAnswer.answer_year));
+      setSubmitted(true);
+    }
   }
 
+  /*
+   * ---------------------------------------------------------
+   * TIMER
+   * ---------------------------------------------------------
+   */
   useEffect(() => {
     if (
       game?.status !== "question" ||
@@ -129,6 +291,11 @@ export default function PlayPage() {
     return () => clearInterval(timer);
   }, [game?.status, game?.question_started_at]);
 
+  /*
+   * ---------------------------------------------------------
+   * SPIEL BEITRETEN
+   * ---------------------------------------------------------
+   */
   async function joinGame() {
     setError("");
 
@@ -153,16 +320,29 @@ export default function PlayPage() {
       .select()
       .single();
 
-    if (error) {
+    if (error || !data) {
       console.error(error);
       setError("Beitritt zum Spiel fehlgeschlagen.");
       return;
     }
 
+    /*
+     * Player dauerhaft im Browser speichern.
+     */
+    localStorage.setItem("quiz_player_id", data.id);
+    localStorage.setItem("quiz_player_name", cleanName);
+    localStorage.setItem("quiz_game_id", game.id);
+
     setPlayerId(data.id);
+    setName(cleanName);
     setJoined(true);
   }
 
+  /*
+   * ---------------------------------------------------------
+   * ANTWORT ABSCHICKEN
+   * ---------------------------------------------------------
+   */
   async function submitAnswer() {
     if (!game || !question || !playerId) return;
 
@@ -218,13 +398,18 @@ export default function PlayPage() {
     }
   }
 
-  if (!game) {
+  /*
+   * ---------------------------------------------------------
+   * LOADING
+   * ---------------------------------------------------------
+   */
+  if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-white text-red-700 p-6">
+      <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6">
         <div className="text-center">
           <div className="text-6xl mb-6">📸</div>
 
-          <h1 className="text-4xl font-black mb-4">
+          <h1 className="text-4xl font-black text-red-600 mb-4">
             JTRI Jubiläums-Quiz
           </h1>
 
@@ -236,6 +421,34 @@ export default function PlayPage() {
     );
   }
 
+  /*
+   * ---------------------------------------------------------
+   * KEIN SPIEL
+   * ---------------------------------------------------------
+   */
+  if (!game) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white text-red-700 p-6">
+        <div className="text-center">
+          <div className="text-6xl mb-6">📸</div>
+
+          <h1 className="text-4xl font-black mb-4">
+            JTRI Jubiläums-Quiz
+          </h1>
+
+          <p className="text-gray-600">
+            Kein Spiel gefunden.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * REGISTRIERUNG
+   * ---------------------------------------------------------
+   */
   if (!joined) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6">
@@ -254,7 +467,9 @@ export default function PlayPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") joinGame();
+              if (e.key === "Enter") {
+                joinGame();
+              }
             }}
             placeholder="Dein Name"
             className="w-full rounded-2xl p-4 text-xl text-black bg-white mb-4 border-2 border-gray-200 focus:border-red-600 focus:outline-none"
@@ -277,6 +492,11 @@ export default function PlayPage() {
     );
   }
 
+  /*
+   * ---------------------------------------------------------
+   * WARTEN
+   * ---------------------------------------------------------
+   */
   if (game.status === "waiting") {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6 text-center">
@@ -295,6 +515,11 @@ export default function PlayPage() {
     );
   }
 
+  /*
+   * ---------------------------------------------------------
+   * QUIZ BEENDET
+   * ---------------------------------------------------------
+   */
   if (game.status === "finished") {
     return (
       <main className="min-h-screen flex items-center justify-center bg-red-600 text-white p-6 text-center">
@@ -313,6 +538,11 @@ export default function PlayPage() {
     );
   }
 
+  /*
+   * ---------------------------------------------------------
+   * AUFLÖSUNG
+   * ---------------------------------------------------------
+   */
   if (game.status === "reveal") {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6 text-center">
@@ -331,6 +561,11 @@ export default function PlayPage() {
     );
   }
 
+  /*
+   * ---------------------------------------------------------
+   * LEADERBOARD
+   * ---------------------------------------------------------
+   */
   if (game.status === "leaderboard") {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-6 text-center">
@@ -349,6 +584,11 @@ export default function PlayPage() {
     );
   }
 
+  /*
+   * ---------------------------------------------------------
+   * FRAGE
+   * ---------------------------------------------------------
+   */
   return (
     <main className="min-h-screen bg-white text-gray-900 p-6">
       <div className="max-w-xl mx-auto">
@@ -388,15 +628,15 @@ export default function PlayPage() {
                 </p>
 
                 <input
-				  type="number"
-				  value={answer}
-				  onChange={(e) =>
-					setAnswer(e.target.value)
-				  }
-				  placeholder="Jahr"
-				  className="w-full rounded-2xl p-5 text-2xl text-black bg-white mb-4 text-center border-2 border-gray-200 focus:border-red-600 focus:outline-none appearance-none [appearance:textfield]"
-				  disabled={seconds <= 0}
-				/>
+                  type="number"
+                  value={answer}
+                  onChange={(e) =>
+                    setAnswer(e.target.value)
+                  }
+                  placeholder="Jahr"
+                  className="w-full rounded-2xl p-5 text-2xl text-black bg-white mb-4 text-center border-2 border-gray-200 focus:border-red-600 focus:outline-none appearance-none [appearance:textfield]"
+                  disabled={seconds <= 0}
+                />
 
                 <button
                   onClick={submitAnswer}
@@ -408,14 +648,17 @@ export default function PlayPage() {
               </>
             ) : (
               <div className="text-center bg-red-50 rounded-2xl p-8 border-2 border-red-100">
-                <div className="text-6xl mb-4">✅</div>
+                <div className="text-6xl mb-4">
+                  ✅
+                </div>
 
                 <h2 className="text-3xl font-black text-red-600 mb-2">
                   Antwort gespeichert!
                 </h2>
 
                 <p className="text-gray-700">
-                  Deine Antwort: <strong>{answer}</strong>
+                  Deine Antwort:{" "}
+                  <strong>{answer}</strong>
                 </p>
 
                 <p className="text-gray-500 mt-4">
