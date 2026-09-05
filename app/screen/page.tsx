@@ -12,6 +12,7 @@ export default function ScreenPage() {
   const [question, setQuestion] = useState<any>(null);
   const [playUrl, setPlayUrl] = useState("");
 
+
   async function loadGame() {
     const { data: gameData } = await supabase
       .from("games")
@@ -80,7 +81,7 @@ export default function ScreenPage() {
         <div className="absolute top-0 left-0 right-0 h-4 bg-red-600" />
 
         <h1 className="text-7xl md:text-8xl font-black mb-6">
-          📸 JAHRES-QUIZ
+          📸 JTRI Jubiläums-Quiz
         </h1>
 
         <p className="text-3xl md:text-4xl text-gray-700 mb-10">
@@ -115,7 +116,7 @@ export default function ScreenPage() {
         <div className="absolute top-0 left-0 right-0 h-4 bg-red-600" />
 
         <div className="absolute top-10 left-10 text-4xl font-black text-red-700">
-          Frage {question.question_number} / 20
+          Frage {question.question_number} / 45
         </div>
 
         {game.question_started_at && (

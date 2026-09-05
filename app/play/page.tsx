@@ -225,7 +225,7 @@ export default function PlayPage() {
           <div className="text-6xl mb-6">📸</div>
 
           <h1 className="text-4xl font-black mb-4">
-            JAHRES-QUIZ
+            JTRI Jubiläums-Quiz
           </h1>
 
           <p className="text-gray-600">
@@ -243,7 +243,7 @@ export default function PlayPage() {
           <div className="text-7xl mb-6">📸</div>
 
           <h1 className="text-5xl font-black text-red-600 mb-3">
-            JAHRES-QUIZ
+            JTRI Jubiläums-Quiz
           </h1>
 
           <p className="text-gray-600 text-lg mb-8">
@@ -264,7 +264,7 @@ export default function PlayPage() {
             onClick={joinGame}
             className="w-full rounded-2xl bg-red-600 text-white font-bold text-xl p-4 shadow-lg active:scale-95 transition"
           >
-            MITspielen
+            Mitspielen
           </button>
 
           {error && (

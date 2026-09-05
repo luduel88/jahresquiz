@@ -210,8 +210,8 @@ export default function AdminPage() {
     const nextQuestion =
       game.current_question + 1;
 
-    if (nextQuestion > 20) {
-      alert("Alle 20 Fragen sind gespielt.");
+    if (nextQuestion > 45) {
+      alert("Alle 45 Fragen sind gespielt.");
       return;
     }
 
@@ -313,7 +313,7 @@ export default function AdminPage() {
     const confirmed = window.confirm(
       "QUIZ ZURÜCKSETZEN?\n\n" +
         "Teilnehmer und Antworten werden gelöscht.\n\n" +
-        "Die 20 Fragen und Bilder bleiben erhalten."
+        "Die Fragen und Bilder bleiben erhalten."
     );
 
     if (!confirmed) {
@@ -607,7 +607,7 @@ export default function AdminPage() {
                   <div className="text-3xl font-black">
                     {game.current_question}
                     <span className="text-gray-400 text-xl">
-                      /20
+                      /45
                     </span>
                   </div>
 
