@@ -115,7 +115,7 @@ export async function POST(request: Request) {
     const elapsed =
       (Date.now() - startedAt) / 1000;
 
-    if (elapsed > 20) {
+    if (elapsed > 30) {
       return NextResponse.json(
         {
           error: "Die Zeit ist abgelaufen.",

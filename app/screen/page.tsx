@@ -122,7 +122,7 @@ export default function ScreenPage() {
           <div className="absolute top-6 right-10 bg-red-600 text-white px-8 py-4 rounded-2xl shadow-lg">
             <Countdown
               startedAt={game.question_started_at}
-              duration={20}
+              duration={30}
             />
           </div>
         )}

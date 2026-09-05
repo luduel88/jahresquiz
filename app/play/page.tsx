@@ -25,7 +25,7 @@ export default function PlayPage() {
   const [joined, setJoined] = useState(false);
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [seconds, setSeconds] = useState(20);
+  const [seconds, setSeconds] = useState(30);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function PlayPage() {
         (Date.now() - started) / 1000
       );
 
-      setSeconds(Math.max(0, 20 - elapsed));
+      setSeconds(Math.max(0, 30 - elapsed));
     };
 
     updateTimer();
@@ -388,15 +388,15 @@ export default function PlayPage() {
                 </p>
 
                 <input
-                  type="number"
-                  value={answer}
-                  onChange={(e) =>
-                    setAnswer(e.target.value)
-                  }
-                  placeholder="Jahr"
-                  className="w-full rounded-2xl p-5 text-2xl text-black bg-white mb-4 text-center border-2 border-gray-200 focus:border-red-600 focus:outline-none"
-                  disabled={seconds <= 0}
-                />
+				  type="number"
+				  value={answer}
+				  onChange={(e) =>
+					setAnswer(e.target.value)
+				  }
+				  placeholder="Jahr"
+				  className="w-full rounded-2xl p-5 text-2xl text-black bg-white mb-4 text-center border-2 border-gray-200 focus:border-red-600 focus:outline-none appearance-none [appearance:textfield]"
+				  disabled={seconds <= 0}
+				/>
 
                 <button
                   onClick={submitAnswer}
