@@ -224,32 +224,32 @@ export default function PlayPage() {
    * ---------------------------------------------------------
    */
 
-  useEffect(() => {
-    if (
-      game?.status !== "question" ||
-      !game.question_started_at
-    ) {
-      return;
-    }
+	useEffect(() => {
+	  if (
+		game?.status !== "question" ||
+		!game.question_started_at
+	  ) {
+		return;
+	  }
 
-    const updateTimer = () => {
-      const started = new Date(
-        game.question_started_at
-      ).getTime();
+	  const updateTimer = () => {
+		const started = new Date(
+		  game.question_started_at!
+		).getTime();
 
-      const elapsed = Math.floor(
-        (Date.now() - started) / 1000
-      );
+		const elapsed = Math.floor(
+		  (Date.now() - started) / 1000
+		);
 
-      setSeconds(Math.max(0, 30 - elapsed));
-    };
+		setSeconds(Math.max(0, 30 - elapsed));
+	  };
 
-    updateTimer();
+	  updateTimer();
 
-    const timer = setInterval(updateTimer, 250);
+	  const timer = setInterval(updateTimer, 250);
 
-    return () => clearInterval(timer);
-  }, [game?.status, game?.question_started_at]);
+	  return () => clearInterval(timer);
+	}, [game?.status, game?.question_started_at]);
 
   /*
    * ---------------------------------------------------------
